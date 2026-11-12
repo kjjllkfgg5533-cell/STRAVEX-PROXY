@@ -1,4 +1,4 @@
-import blackboxprotobuf
+import bbpb as blackboxprotobuf
 import gzip
 import io
 import copy
