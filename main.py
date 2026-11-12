@@ -1,67 +1,37 @@
 import subprocess
 import time
 import sys
-import os
 
 # --- CONFIGURATION ---
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Change these names if your files are named differently
+SCRIPT_1 = "bot.py"       # Your Discord Bot
+SCRIPT_2 = "Vault.py"     # Your Proxy Script
 
-# البروكسي الرئيسي فقط (Vault.py)
-# Vault.py هو الذي يتحقق من uid.txt ويفتح العناصر ويحقن الإيميلات
-SCRIPT_MAIN = os.path.join(BASE_DIR, "Vault.py")
+print(f"[*] Starting {SCRIPT_1}...")
+# Start Discord Bot in background
+p1 = subprocess.Popen([sys.executable, SCRIPT_1])
 
-# ملف UID الذي يقرأه Vault.py
-UID_FILE = os.path.join(BASE_DIR, "uid.txt")
+print(f"[*] Starting {SCRIPT_2}...")
+# Start Proxy in background
+p2 = subprocess.Popen([sys.executable, SCRIPT_2])
 
+print("[*] Both scripts are running! Press CTRL+C to stop.")
 
-def ensure_uid_file():
-    """تأكد أن uid.txt موجود قبل تشغيل البروكسي."""
-    if not os.path.exists(UID_FILE):
-        print(f"[!] {UID_FILE} غير موجود. جاري إنشاء ملف فارغ...")
-        with open(UID_FILE, "w", encoding="utf-8") as f:
-            f.write("")
-        print(f"[i] أضف UIDs يدوياً في: {UID_FILE} (سطر لكل UID)")
-    else:
-        with open(UID_FILE, "r", encoding="utf-8") as f:
-            count = sum(1 for line in f if line.strip().isdigit())
-        print(f"[i] تم تحميل {count} UID من {UID_FILE}")
+try:
+    # Keep the main process alive so Wispbyte doesn't think the server crashed
+    while True:
+        time.sleep(1)
+        
+        # Optional: Check if they crashed and restart them
+        if p1.poll() is not None:
+            print(f"[!] {SCRIPT_1} crashed! Restarting...")
+            p1 = subprocess.Popen([sys.executable, SCRIPT_1])
+            
+        if p2.poll() is not None:
+            print(f"[!] {SCRIPT_2} crashed! Restarting...")
+            p2 = subprocess.Popen([sys.executable, SCRIPT_2])
 
-
-def start_proxy():
-    """تشغيل Vault.py كعملية فرعية."""
-    print(f"[*] تشغيل {os.path.basename(SCRIPT_MAIN)}...")
-    return subprocess.Popen([sys.executable, SCRIPT_MAIN], cwd=BASE_DIR)
-
-
-def main():
-    if not os.path.exists(SCRIPT_MAIN):
-        print(f"[!] خطأ: لم يتم العثور على {SCRIPT_MAIN}")
-        sys.exit(1)
-
-    ensure_uid_file()
-
-    proxy = start_proxy()
-    print("[*] البروكسي يعمل الآن على المنفذ 30015 (mitmweb).")
-    print("[*] اضغط CTRL+C للإيقاف.\n")
-
-    try:
-        while True:
-            time.sleep(1)
-
-            # إعادة التشغيل التلقائي إذا انهار
-            if proxy.poll() is not None:
-                print(f"[!] {os.path.basename(SCRIPT_MAIN)} توقف! جاري إعادة التشغيل...")
-                proxy = start_proxy()
-
-    except KeyboardInterrupt:
-        print("\n[!] إيقاف البروكسي...")
-        proxy.terminate()
-        try:
-            proxy.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            proxy.kill()
-        print("[i] تم الإيقاف.")
-
-
-if __name__ == "__main__":
-    main()
+except KeyboardInterrupt:
+    print("\n[!] Stopping scripts...")
+    p1.terminate()
+    p2.terminate()

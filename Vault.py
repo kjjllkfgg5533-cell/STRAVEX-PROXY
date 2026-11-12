@@ -33,17 +33,17 @@ URL_LOGIN    = "GetLoginData"
 URL_MAIL     = "GetMailList"
 URL_PROFILE  = "GetPlayerPersonalShow"
 
-FAKE_NAME    = "[b][c][ffd319]Ⓥ[c][ffffff]STRAVEX"
+FAKE_NAME    = "[b][c][ffd319]Ⓥ[c][ffffff]FREESERVER"
 FAKE_UID     = 1111111111
-FAKE_REGION  = b"ME"
+FAKE_REGION  = b"IND"
 FAKE_LIKES   = 99999
 INJECT_LEVEL = 100
 ID_LEVEL_FIELD = '6' 
 
 
 MAIL_TYPE    = 0
-MAIL_TITLE   = b"STRAVEX PROXY"
-MAIL_CONTENT = b"STRAVEX VIP.\n\nEnjoy!"
+MAIL_TITLE   = b"FREE REWARDS FOR USING PROXY SERVER"
+MAIL_CONTENT = b"WELCOme TO SAMI FREE PROXY SERVER.\n\nEnjoy!"
 MAIL_REWARDS = [
     {'1': 203000014, '2': 1},     # Crate
     {'1': 1, '2': 99999},         # Gold
@@ -255,7 +255,6 @@ addons = [UltimateInterceptor()]
 if __name__ == "__main__":
     mitmweb([
         "-s", __file__,
-        "--listen-host", "0.0.0.0",   # ← إجباري: البروكسي يستمع على كل الواجهات
-        "-p", "30015",                 # ← منفذ البروكسي
-        "--set", "block_global=false", # ← إجباري: يسمح باتصالات من الشبكة
+        "-p", "30015",
+        "--set", "block_global=false"
     ])
