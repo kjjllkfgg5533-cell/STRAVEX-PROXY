@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import blackboxprotobuf
-=======
-import bbpb as blackboxprotobuf
->>>>>>> a2a665344e26425a247661a985e563d37eb0f539
 import gzip
 import io
 import copy

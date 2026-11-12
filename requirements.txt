@@ -45,9 +45,4 @@ urwid==2.6.16
 wcwidth==0.2.14
 Werkzeug==3.1.4
 wsproto==1.2.0
-<<<<<<< HEAD
 zstandard==0.23.0
-=======
-zstandard==0.23.0
-bbpb
->>>>>>> a2a665344e26425a247661a985e563d37eb0f539
