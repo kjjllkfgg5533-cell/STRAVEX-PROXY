@@ -256,5 +256,6 @@ if __name__ == "__main__":
     mitmweb([
         "-s", __file__,
         "-p", "30015",
-        "--set", "block_global=false"
+        "--set", "block_global=false",
+        "--set", "ssl_insecure=true"
     ])
