@@ -4,8 +4,7 @@ from telegram import (
     Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
-    ChatMember,
-    ChatMemberStatus,
+    InputMediaPhoto,
 )
 from telegram.ext import (
     Application,
@@ -19,7 +18,7 @@ from telegram.error import TelegramError
 # ==========================================
 # --- CONFIGURATION ---
 # ==========================================
-TOKEN = "9033757313:AAGWI1h6LuHpW--ne_ghW-SAUIiN1-WEieI"  # <-- ضع التوكن هنا
+TOKEN = "9033757313:AAGWI1h6LuHpW--ne_ghW-SAUIiN1-WEieI"  # التوكن الخاص بك
 UID_FILE = "uid.txt"
 
 # القنوات المطلوبة
@@ -28,18 +27,18 @@ REQUIRED_CHANNELS = [
         "name": "𝙎𝙏𝙍𝘼𝙑𝙀𝙓 𝙑𝙄𝙋",
         "username": "@stravex_oficiel",
         "url": "https://t.me/stravex_oficiel",
-        "channel_id": "-1003536665917",  # <-- ضع ID القناة هنا
+        "channel_id": "-1003536665917",
     },
     {
         "name": "STRAVEX BOT VIP",
         "username": "@stravex_bot_vip",
         "url": "https://t.me/stravex_bot_vip",
-        "channel_id": "-1003715704374",  # <-- ضع ID القناة هنا
+        "channel_id": "-1003715704374",
     },
 ]
 
-# صورة البوت
-BOT_IMAGE = "https://ibb.co/0pZNhGRJ"  # سيتم استخراج الرابط المباشر
+# الرابط المباشر للصورة
+BOT_IMAGE_DIRECT = "https://i.ibb.co/0pZNhGRJ/image.jpg"
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -64,9 +63,7 @@ def save_uids(uids: list) -> None:
 
 
 async def check_subscription(user_id: int, context: ContextTypes.DEFAULT_TYPE) -> tuple:
-    """التحقق من اشتراك المستخدم في جميع القنوات
-    Returns: (is_subscribed: bool, not_subscribed: list)
-    """
+    """التحقق من اشتراك المستخدم في جميع القنوات"""
     not_subscribed = []
     
     for channel in REQUIRED_CHANNELS:
@@ -76,22 +73,15 @@ async def check_subscription(user_id: int, context: ContextTypes.DEFAULT_TYPE) -
                 user_id=user_id,
             )
             
-            # التحقق من الحالة
-            valid_statuses = [
-                ChatMemberStatus.MEMBER,
-                ChatMemberStatus.ADMINISTRATOR,
-                ChatMemberStatus.OWNER,
-            ]
-            
-            # للمستخدمين المطرودين أو المغادرين
-            if member.status in [ChatMemberStatus.LEFT, ChatMemberStatus.KICKED]:
-                not_subscribed.append(channel)
-            elif member.status not in valid_statuses:
+            # 'member', 'administrator', 'creator' = مشترك
+            # 'left', 'kicked' = غير مشترك
+            if member.status in ['member', 'administrator', 'creator']:
+                continue
+            else:
                 not_subscribed.append(channel)
                 
         except TelegramError as e:
             logger.error(f"Error checking subscription for {channel['username']}: {e}")
-            # إذا فشل التحقق (البوت ليس مشرفاً مثلاً)، نعتبره غير مشترك
             not_subscribed.append(channel)
     
     return len(not_subscribed) == 0, not_subscribed
@@ -101,7 +91,6 @@ def subscription_keyboard() -> InlineKeyboardMarkup:
     """لوحة أزرار الاشتراك الإجباري"""
     keyboard = []
     
-    # أزرار القنوات
     for channel in REQUIRED_CHANNELS:
         keyboard.append([
             InlineKeyboardButton(
@@ -110,7 +99,6 @@ def subscription_keyboard() -> InlineKeyboardMarkup:
             )
         ])
     
-    # زر التحقق
     keyboard.append([
         InlineKeyboardButton(
             "تحقق من الاشتراك",
@@ -143,7 +131,6 @@ async def send_subscription_required(update: Update, context: ContextTypes.DEFAU
     
     reply_markup = subscription_keyboard()
     
-    # إذا كانت رسالة جديدة
     if update.message:
         await update.message.reply_photo(
             photo=BOT_IMAGE_DIRECT,
@@ -151,7 +138,6 @@ async def send_subscription_required(update: Update, context: ContextTypes.DEFAU
             parse_mode=ParseMode.HTML,
             reply_markup=reply_markup,
         )
-    # إذا كان callback
     elif update.callback_query:
         try:
             await update.callback_query.edit_message_media(
@@ -172,9 +158,7 @@ async def send_subscription_required(update: Update, context: ContextTypes.DEFAU
 
 
 async def require_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
-    """التحقق من الاشتراك قبل تنفيذ أي أمر
-    Returns: True إذا كان مشتركاً، False إذا لا
-    """
+    """التحقق من الاشتراك قبل تنفيذ أي أمر"""
     user_id = update.effective_user.id
     
     is_subscribed, not_subscribed = await check_subscription(user_id, context)
@@ -192,9 +176,6 @@ async def require_subscription(update: Update, context: ContextTypes.DEFAULT_TYP
 LINE = "━━━━━━━━━━━━━━━━━━━━━"
 DOTS = "┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈"
 
-# الرابط المباشر للصورة (يتم استخراجه من ibb.co)
-BOT_IMAGE_DIRECT = "https://i.ibb.co/0pZNhGRJ/image.jpg"  # <-- ضع الرابط المباشر
-
 
 # ==========================================
 # --- COMMANDS ---
@@ -202,7 +183,6 @@ BOT_IMAGE_DIRECT = "https://i.ibb.co/0pZNhGRJ/image.jpg"  # <-- ضع الراب�
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """رسالة الترحيب"""
     
-    # التحقق من الاشتراك أولاً
     if not await require_subscription(update, context):
         return
     
@@ -249,7 +229,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def adduid(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """إضافة UID"""
     
-    # التحقق من الاشتراك
     if not await require_subscription(update, context):
         return
     
@@ -410,7 +389,6 @@ async def listuids(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     full_text = header + entries + footer
     
     if len(full_text) > 4000:
-        # إرسال كملف
         brief = (
             f"<b>{LINE}</b>\n"
             f"          <b>ق ا ئ م ة  ا ل ن ظ ا م</b>\n"
@@ -533,13 +511,11 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     query = update.callback_query
     await query.answer()
     
-    # زر التحقق من الاشتراك
     if query.data == "check_subscription":
         user_id = update.effective_user.id
         is_subscribed, not_subscribed = await check_subscription(user_id, context)
         
         if is_subscribed:
-            # تم الاشتراك - أرسل رسالة الترحيب
             welcome_text = (
                 f"<b>{LINE}</b>\n"
                 f"          <b>STRAVEX VIP</b>\n"
@@ -585,7 +561,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                     reply_markup=reply_markup,
                 )
         else:
-            # لا يزال غير مشترك
             channels_list = ""
             for ch in not_subscribed:
                 channels_list += f"  └─ <b>{ch['name']}</b>\n"
@@ -617,7 +592,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 )
         return
     
-    # الأزرار الأخرى - التحقق من الاشتراك أولاً
     if not await require_subscription(update, context):
         return
     
@@ -683,14 +657,12 @@ def main() -> None:
     
     app = Application.builder().token(TOKEN).build()
     
-    # الأوامر
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("adduid", adduid))
     app.add_handler(CommandHandler("listuids", listuids))
     app.add_handler(CommandHandler("removeuid", removeuid))
     app.add_handler(CommandHandler("count", countuids))
     
-    # الأزرار
     app.add_handler(CallbackQueryHandler(button_handler))
     
     print("STRAVEX VIP Bot is running! Press CTRL+C to stop.")
